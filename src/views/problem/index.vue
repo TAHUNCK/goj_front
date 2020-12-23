@@ -82,6 +82,7 @@
 
 <script>
 import { getProblemList, getClassifyListCascader } from '@/api/problem'
+import Cookies from 'js-cookie'
 
 export default {
   data() {

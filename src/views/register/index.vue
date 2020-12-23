@@ -81,8 +81,9 @@
 
 <script>
 import { validEmail } from '@/utils/validate'
-import { validateCode } from '@/api/user'
+import { validateCode, register } from '@/api/user'
 import { Message } from 'element-ui'
+import { setAvatar, setToken, setUserId } from '@/utils/auth'
 
 export default {
   data() {
@@ -112,8 +113,6 @@ export default {
     const captcha = (rule, value, callback) => {
       if (value.length !== 6) {
         callback(new Error('Please enter a 6-bit captcha'))
-      } else if (!validEmail(value)) {
-        callback(new Error('Please enter the correct email'))
       } else {
         callback()
       }
@@ -172,19 +171,20 @@ export default {
       })
     },
     handleRegister() {
-      this.$refs.registerForm.validate(valid => {
-        if (valid) {
-          this.loading = true
-          this.$store.dispatch('user/login', this.registerForm).then(() => {
-            this.$router.push({ path: this.redirect || '/' })
-            this.loading = false
-          }).catch(() => {
-            this.loading = false
-          })
-        } else {
-          console.log('error submit!!')
-          return false
-        }
+      const formData = new FormData()
+      formData.append('email', this.registerForm.email)
+      formData.append('password', this.registerForm.password)
+      formData.append('rePassword', this.registerForm.rePassword)
+      formData.append('captcha', this.registerForm.captcha)
+      register(formData).then(res => {
+        setToken(res.data.token, res.data.expiresIn)
+        setUserId(res.data.userId, res.data.expiresIn)
+        setAvatar(res.data.headPortrait, res.data.expiresIn)
+        Message.success(res.message)
+        setTimeout(() => {
+          this.$router.go(0)
+          this.$router.push('/')
+        }, 2000)
       })
     }
   }

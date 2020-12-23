@@ -8,9 +8,17 @@ export function validateCode(params) {
   })
 }
 
+export function register(data) {
+  return request({
+    url: '/user/user/register',
+    method: 'post',
+    data
+  })
+}
+
 export function login(data) {
   return request({
-    url: '/vue-admin-template/user/login',
+    url: '/user/user/login',
     method: 'post',
     data
   })

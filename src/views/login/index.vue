@@ -6,15 +6,15 @@
         <h3 class="title">Login</h3>
       </div>
 
-      <el-form-item prop="username">
+      <el-form-item prop="email">
         <span class="svg-container">
           <svg-icon icon-class="user" />
         </span>
         <el-input
-          ref="username"
-          v-model="loginForm.username"
+          ref="email"
+          v-model="loginForm.email"
           placeholder="Email"
-          name="username"
+          name="email"
           type="text"
           tabindex="1"
           auto-complete="on"
@@ -54,11 +54,14 @@
 
 <script>
 import { validEmail } from '@/utils/validate'
+import { login } from '@/api/user'
+import { Message } from 'element-ui'
+import { setToken, setUserId, setAvatar } from '@/utils/auth'
 
 export default {
   name: 'Login',
   data() {
-    const validateUsername = (rule, value, callback) => {
+    const validateEmail = (rule, value, callback) => {
       if (!validEmail(value)) {
         callback(new Error('Please enter the correct user name'))
       } else {
@@ -74,11 +77,11 @@ export default {
     }
     return {
       loginForm: {
-        username: '',
+        email: '',
         password: ''
       },
       loginRules: {
-        username: [{ required: true, trigger: 'blur', validator: validateUsername }],
+        email: [{ required: true, trigger: 'blur', validator: validateEmail }],
         password: [{ required: true, trigger: 'blur', validator: validatePassword }]
       },
       loading: false,
@@ -106,19 +109,18 @@ export default {
       })
     },
     handleLogin() {
-      this.$refs.loginForm.validate(valid => {
-        if (valid) {
-          this.loading = true
-          this.$store.dispatch('user/login', this.loginForm).then(() => {
-            this.$router.push({ path: this.redirect || '/' })
-            this.loading = false
-          }).catch(() => {
-            this.loading = false
-          })
-        } else {
-          console.log('error submit!!')
-          return false
-        }
+      const formData = new FormData()
+      formData.append('email', this.loginForm.email)
+      formData.append('password', this.loginForm.password)
+      login(formData).then(res => {
+        setToken(res.data.token, res.data.expiresIn)
+        setUserId(res.data.userId, res.data.expiresIn)
+        setAvatar(res.data.headPortrait, res.data.expiresIn)
+        Message.success(res.message)
+        setTimeout(() => {
+          this.$router.go(0)
+          this.$router.push('/')
+        }, 2000)
       })
     }
   }

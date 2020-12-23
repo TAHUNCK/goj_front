@@ -13,9 +13,10 @@ import getPageTitle from '@/utils/get-page-title'
 NProgress.configure({ showSpinner: false }) // NProgress Configuration
 
 // eslint-disable-next-line no-unused-vars
-const whiteList = ['/login'] // no redirect whitelist
+const whiteList = ['/', '/home', '/home/index', '/problem/index', '/status/index', '/rank/index',
+  '/contest/index', '/record/index', '/editor', '/help/index', '/login/index', '/register/index'] // no redirect whitelist
 
-/* router.beforeEach(async(to, from, next) => {
+router.beforeEach(async(to, from, next) => {
   // start progress bar
   NProgress.start()
 
@@ -26,11 +27,15 @@ const whiteList = ['/login'] // no redirect whitelist
   const hasToken = getToken()
 
   if (hasToken) {
-    if (to.path === '/login') {
+    if (to.path === '/login/index') {
       // if is logged in, redirect to the home page
       next({ path: '/' })
       NProgress.done()
     } else {
+      next()
+      NProgress.done()
+    }
+    /* else {
       const hasGetUserInfo = store.getters.name
       if (hasGetUserInfo) {
         next()
@@ -44,11 +49,11 @@ const whiteList = ['/login'] // no redirect whitelist
           // remove token and go to login page to re-login
           await store.dispatch('user/resetToken')
           Message.error(error || 'Has Error')
-          next(`/login?redirect=${to.path}`)
+          next(`/login/index?redirect=${to.path}`)
           NProgress.done()
         }
       }
-    }
+    }*/
   } else {
     /!* has no token*!/
 
@@ -57,11 +62,11 @@ const whiteList = ['/login'] // no redirect whitelist
       next()
     } else {
       // other pages that do not have permission to access are redirected to the login page.
-      next(`/login?redirect=${to.path}`)
+      next(`/login/index?redirect=${to.path}`)
       NProgress.done()
     }
   }
-})*/
+})
 
 router.afterEach(() => {
   // finish progress bar
