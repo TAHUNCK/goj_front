@@ -80,13 +80,26 @@
     </div>
     <div class="right">
       <el-header class="editor-header" style="background-color: #3B3B3B;">
-        <el-button class="submit-btn" @click="dialogSubmitVisible = true">提交</el-button>
-        <el-dialog width="70%" title="提交结果" :show-close="false" :visible.sync="dialogSubmitVisible">
-          <el-table :data="gridData">
-            <el-table-column property="date" label="日期" width="150" />
-            <el-table-column property="name" label="姓名" width="200" />
-            <el-table-column property="address" label="地址" />
+        <el-button class="submit-btn" @click="submit_code">提交</el-button>
+        <el-dialog title="提交结果" :visible.sync="dialogSubmitVisible" top="2vh" style="line-height: 20px;">
+          <el-table v-loading="submit_loading" element-loading-background="#fff" element-loading-text="Pending..." :data="gridData" style="margin-bottom: 20px;">
+            <el-table-column property="in_date" label="提交时间" />
+            <el-table-column property="result" label="运行结果" />
+            <el-table-column property="time" label="消耗时间" />
+            <el-table-column property="memory" label="消耗内存" />
+            <el-table-column property="language" label="编译器" />
           </el-table>
+          <div v-if="!submit_loading">
+            <p style="margin: 5px 0;font-size: 16px;">提交代码</p>
+            <MonacoEditor v-model="code" :language="selectLanguage" :options="submit_options" theme="vs-dark" style="height: 400px;margin-bottom: 20px;" />
+            <p style="margin: 5px 0;font-size: 16px;">编译信息</p>
+            <el-input
+              v-model="compiler_info"
+              type="textarea"
+              readonly
+              :autosize="{ minRows: 8, maxRows: 10}"
+            />
+          </div>
         </el-dialog>
         <el-select v-model="selectLanguage" style="width:100px;" placeholder="请选择" class="select-language">
           <el-option
@@ -97,7 +110,7 @@
           />
         </el-select>
         <el-button class="submit-records" @click="dialogRunVisible = true">提交记录</el-button>
-        <el-dialog width="70%" title="运行记录" :visible.sync="dialogRunVisible">
+        <el-dialog title="运行记录" :visible.sync="dialogRunVisible" style="line-height: 20px;">
           <el-table :data="gridData">
             <el-table-column property="date" label="日期" width="150" />
             <el-table-column property="name" label="姓名" width="200" />
@@ -125,10 +138,13 @@ export default {
   data() {
     return {
       gridData: [{
-        date: '2016-05-02',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1518 弄'
+        in_date: '2016-05-02 13:23:43',
+        result: '答案正确',
+        time: '14ms',
+        memory: '2634k',
+        language: 'C(gcc)'
       }],
+      submit_loading: false,
       options: [{
         value: 'c',
         label: 'C'
@@ -145,6 +161,13 @@ export default {
       dialogRunVisible: false,
       dialogSubmitVisible: false,
       selectLanguage: 'c',
+      submit_options: {
+        readOnly: true
+      },
+      compiler_info: 'a.c: In function ‘main’:\n' +
+        'a.c:9:5: warning: ignoring return value of ‘scanf’, declared with attribute warn_unused_result [-Wunused-result]\n' +
+        '     scanf("%d %d", &m, &n);\n' +
+        '     ^~~~~~~~~~~~~~~~~~~~~~',
       problemTitle: '',
       timeLimit: '',
       memoryLimit: '',
@@ -154,7 +177,46 @@ export default {
       mavonSampleInput: '',
       mavonSampleOutput: '',
       mavonTips: '',
-      code: ''
+      code: '#include<cstdio>\n' +
+        '\n' +
+        'int max(int a, int b)//取最大值函数\n' +
+        '{\n' +
+        '    return a > b ? a : b;\n' +
+        '}\n' +
+        '\n' +
+        'struct Thing\n' +
+        '{\n' +
+        '    int w;\n' +
+        '    int v;\n' +
+        '}list[101];\n' +
+        '\n' +
+        'int dp[101][1001];\n' +
+        '\n' +
+        'int main()\n' +
+        '{\n' +
+        '    int s, n;//背包容量和物品总数\n' +
+        '    while (scanf("%d%d", &s, &n) != EOF)\n' +
+        '    {\n' +
+        '        for (int i = 1; i <= n; i++)\n' +
+        '        {\n' +
+        '            scanf("%d%d", &list[i].w, &list[i].v);//读入每个物品的体积和价值\n' +
+        '        }\n' +
+        '        for (int i = 0; i <= s; i++) dp[0][i] = 0;//初始化二维数组\n' +
+        '        for (int i = 1; i <= n; i++)//循环每个物品，执行状态转移方程\n' +
+        '        {\n' +
+        '            for (int j = s; j >= list[i].w; j--)\n' +
+        '            {\n' +
+        '                dp[i][j] = max(dp[i - 1][j], dp[i - 1][j - list[i].w] + list[i].v);\n' +
+        '            }\n' +
+        '            for (int j = list[i].w - 1; j >= 0; j --)\n' +
+        '            {\n' +
+        '                dp[i][j] = dp[i - 1][j];\n' +
+        '            }\n' +
+        '        }\n' +
+        '        printf("%d\\n", dp[n][s]);\n' +
+        '    }\n' +
+        '    return 0;\n' +
+        '}'
     }
   },
   created() {
@@ -164,6 +226,13 @@ export default {
     // console.log('this is my editor',this.editor);
   },
   methods: {
+    submit_code() {
+      this.dialogSubmitVisible = true
+      this.submit_loading = true
+      setTimeout(() => {
+        this.submit_loading = false
+      }, 2000)
+    },
     getProblemById() {
       getProblemById(this.$route.query)
         .then(res => {
@@ -196,6 +265,10 @@ export default {
 .monaco-editor {
   width: 100%;
   height: 100%;
+}
+::v-deep .el-textarea__inner{
+  background-color: #e5e5e5;
+  color: #1c1c1c;
 }
 .submit-records{
   position: absolute;
