@@ -81,9 +81,15 @@
     <div class="right">
       <el-header class="editor-header" style="background-color: #3B3B3B;">
         <el-button class="submit-btn" @click="submit_code">提交</el-button>
-        <el-dialog title="提交结果" :visible.sync="dialogSubmitVisible" top="2vh" style="line-height: 20px;">
+        <el-dialog
+          title="提交结果"
+          :visible.sync="dialogSubmitVisible"
+          :close-on-click-modal="false"
+          top="2vh"
+          style="line-height: 20px;"
+        >
           <el-table v-loading="submit_loading" element-loading-background="#fff" element-loading-text="Pending..." :data="gridData" style="margin-bottom: 20px;">
-            <el-table-column property="in_date" label="提交时间" />
+            <el-table-column property="in_date" label="提交时间" width="170" />
             <el-table-column property="result" label="运行结果" />
             <el-table-column property="time" label="消耗时间" />
             <el-table-column property="memory" label="消耗内存" />
@@ -91,13 +97,13 @@
           </el-table>
           <div v-if="!submit_loading">
             <p style="margin: 5px 0;font-size: 16px;">提交代码</p>
-            <MonacoEditor v-model="code" :language="selectLanguage" :options="submit_options" theme="vs-dark" style="height: 400px;margin-bottom: 20px;" />
+            <MonacoEditor v-model="code" :language="selectLanguage" :options="submit_options" theme="vs-dark" style="height: 300px;margin-bottom: 20px;" />
             <p style="margin: 5px 0;font-size: 16px;">编译信息</p>
             <el-input
               v-model="compiler_info"
               type="textarea"
               readonly
-              :autosize="{ minRows: 8, maxRows: 10}"
+              :autosize="{ minRows: 5, maxRows: 10}"
             />
           </div>
         </el-dialog>
@@ -110,11 +116,26 @@
           />
         </el-select>
         <el-button class="submit-records" @click="dialogRunVisible = true">提交记录</el-button>
-        <el-dialog title="运行记录" :visible.sync="dialogRunVisible" style="line-height: 20px;">
+        <el-dialog title="运行记录" :visible.sync="dialogRunVisible" top="2vh" style="line-height: 20px;">
           <el-table :data="gridData">
-            <el-table-column property="date" label="日期" width="150" />
-            <el-table-column property="name" label="姓名" width="200" />
-            <el-table-column property="address" label="地址" />
+            <el-table-column type="expand">
+              <template scope="prop">
+                <p style="margin: 5px 0;font-size: 16px;">提交代码</p>
+                <MonacoEditor v-model="code" :language="showLanguage(prop.row.language)" :options="submit_options" theme="vs-dark" style="height: 300px;margin-bottom: 20px;" />
+                <p style="margin: 5px 0;font-size: 16px;">编译信息</p>
+                <el-input
+                  v-model="compiler_info"
+                  type="textarea"
+                  readonly
+                  :autosize="{ minRows: 5, maxRows: 10}"
+                />
+              </template>
+            </el-table-column>
+            <el-table-column property="in_date" label="提交时间" width="170" />
+            <el-table-column property="result" label="运行结果" />
+            <el-table-column property="time" label="消耗时间" />
+            <el-table-column property="memory" label="消耗内存" />
+            <el-table-column property="language" label="编译器" />
           </el-table>
         </el-dialog>
       </el-header>
@@ -143,11 +164,17 @@ export default {
         time: '14ms',
         memory: '2634k',
         language: 'C(gcc)'
+      }, {
+        in_date: '2016-05-02 13:23:43',
+        result: '答案正确',
+        time: '14ms',
+        memory: '2634k',
+        language: 'C(gcc)'
       }],
       submit_loading: false,
       options: [{
         value: 'c',
-        label: 'C'
+        label: 'C(gcc)'
       }, {
         value: 'cpp',
         label: 'C++'
@@ -219,6 +246,13 @@ export default {
         '}'
     }
   },
+  computed: {
+    showLanguage() {
+      return (item) => {
+        return this.options.find(t => t.label === item).value
+      }
+    }
+  },
   created() {
     this.getProblemById()
   },
@@ -255,9 +289,6 @@ export default {
 </script>
 
 <style scoped>
-*::-webkit-scrollbar{
-  display: none;
-}
 .mavon-editor{
   width: calc(100% - 30px);
   margin: 0 0 0 30px;
